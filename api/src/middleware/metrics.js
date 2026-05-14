@@ -2,6 +2,10 @@ const client = require('prom-client');
 
 client.collectDefaultMetrics();
 
+// ─────────────────────────────────────────────
+// MÉTRICAS ORIGINALES (no tocar)
+// ─────────────────────────────────────────────
+
 const http_requests_total = new client.Counter({
   name: 'http_requests_total',
   help: 'Número total de peticiones HTTP recibidas',
@@ -48,16 +52,53 @@ const api_errors_total = new client.Counter({
   labelNames: ['route', 'error_type']
 });
 
-const metrics = {
-  http_requests_total,
-  http_request_duration_seconds,
-  orders_total,
-  orders_revenue_total,
-  products_low_stock,
-  active_users_total,
-  cart_abandonment_total,
-  api_errors_total
-};
+// ─────────────────────────────────────────────
+// MÉTRICAS NUEVAS — Pilar 1 (auth, seguridad, calidad)
+// ─────────────────────────────────────────────
+
+// Todos los intentos de autenticación con resultado y motivo
+// Ejemplo: auth_attempts_total{result="failure", reason="bad_password"} 5
+const authAttempts = new client.Counter({
+  name: 'auth_attempts_total',
+  help: 'Intentos de autenticación (login, register, refresh, verify)',
+  labelNames: ['result', 'reason']
+});
+
+// Peticiones bloqueadas por rate limiter, por tier
+// Ejemplo: rate_limit_hits_total{tier="auth"} 11
+const rateLimitHits = new client.Counter({
+  name: 'rate_limit_hits_total',
+  help: 'Peticiones bloqueadas por rate limiter',
+  labelNames: ['tier']
+});
+
+// Peticiones rechazadas por validación Joi
+// Ejemplo: validation_errors_total{location="body", route="/products"} 3
+const validationErrors = new client.Counter({
+  name: 'validation_errors_total',
+  help: 'Peticiones rechazadas por validación de entrada',
+  labelNames: ['location', 'route']
+});
+
+// Sesiones activas en tiempo real (sube en login, baja en logout)
+// Ejemplo: active_sessions{role="customer"} 12
+const activeSessions = new client.Gauge({
+  name: 'active_sessions',
+  help: 'Sesiones de usuario activas en este momento',
+  labelNames: ['role']
+});
+
+// Nuevos registros de usuario
+// Ejemplo: registrations_total{role="customer"} 8
+const registrations = new client.Counter({
+  name: 'registrations_total',
+  help: 'Nuevos usuarios registrados',
+  labelNames: ['role']
+});
+
+// ─────────────────────────────────────────────
+// MIDDLEWARE HTTP (igual que antes)
+// ─────────────────────────────────────────────
 
 const metricsMiddleware = async (req, res, next) => {
   if (req.path === '/metrics') {
@@ -83,7 +124,35 @@ const metricsMiddleware = async (req, res, next) => {
   next();
 };
 
+// ─────────────────────────────────────────────
+// EXPORTS
+// ─────────────────────────────────────────────
+
+const metrics = {
+  // originales
+  http_requests_total,
+  http_request_duration_seconds,
+  orders_total,
+  orders_revenue_total,
+  products_low_stock,
+  active_users_total,
+  cart_abandonment_total,
+  api_errors_total,
+  // nuevas
+  authAttempts,
+  rateLimitHits,
+  validationErrors,
+  activeSessions,
+  registrations
+};
+
 module.exports = {
   metrics,
-  metricsMiddleware
+  metricsMiddleware,
+  // exportados individualmente para que los middlewares los importen directamente
+  authAttempts,
+  rateLimitHits,
+  validationErrors,
+  activeSessions,
+  registrations
 };
