@@ -1,0 +1,52 @@
+# Reglas de alerta para Li Tahi+
+# Estas reglas las evalúa Prometheus y dispara a Alertmanager
+
+groups:
+  - name: litahi_security
+    interval: 30s
+    rules:
+      - alert: BruteForceDetectado
+        expr: rate(auth_failures_total[1m]) > 0.08
+        for: 30s
+        labels:
+          severity: critical
+          equipo: seguridad
+        annotations:
+          summary: 'Posible ataque de fuerza bruta en /api/auth/login'
+          description: 'Tasa de fallos de autenticación: {{ $value | printf "%.2f" }} req/s durante el último minuto. Umbral: 0.08 req/s.'
+
+      - alert: RateLimitAbusivo
+        expr: rate(rate_limit_hits_total[1m]) > 0.05
+        for: 15s
+        labels:
+          severity: warning
+          equipo: seguridad
+        annotations:
+          summary: 'Cliente abusivo detectado por rate limiter'
+          description: '{{ $value | printf "%.2f" }} bloqueos por segundo. Posible bot o ataque DoS de baja intensidad.'
+
+  - name: litahi_performance
+    interval: 30s
+    rules:
+      - alert: LatenciaAltaP95
+        expr: histogram_quantile(0.95, sum(rate(http_request_duration_seconds_bucket[5m])) by (le)) > 0.5
+        for: 1m
+        labels:
+          severity: warning
+          equipo: backend
+        annotations:
+          summary: 'Latencia p95 por encima de 500ms'
+          description: 'Latencia p95 actual: {{ $value | printf "%.0f" }}ms. Los usuarios están notando lentitud en la tienda.'
+
+  - name: litahi_business
+    interval: 1m
+    rules:
+      - alert: RevenueParado
+        expr: rate(orders_revenue_total[5m]) == 0
+        for: 5m
+        labels:
+          severity: warning
+          equipo: negocio
+        annotations:
+          summary: 'No hay ventas en los últimos 5 minutos'
+          description: 'El revenue no crece. Posible caída del flujo de checkout, página de pago o problema de pasarela.'

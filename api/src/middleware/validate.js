@@ -14,8 +14,7 @@
  *   - Logs structured warn with requestId, failing fields, values redacted
  *   - Increments validationErrors metric with label { location, route }
  */
-
-const logger = require('./logger');
+const { logger } = require('./logger');
 const { validationErrors } = require('./metrics');
 
 function redactValue(key, value) {

@@ -53,7 +53,7 @@ function buildLimiter({ tier, windowMs, max, message }) {
 const authLimiter = buildLimiter({
   tier: 'auth',
   windowMs: 15 * 60 * 1000,
-  max: 500,  // ← era 10
+  max: 2000,  // era 500
   message: 'Too many authentication attempts. Try again in 15 minutes.',
 });
 

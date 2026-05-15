@@ -1,0 +1,32 @@
+# Configuración de Prometheus para Li Tahi+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'litahi-prod'
+
+# Conexión con Alertmanager
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+            - 'alertmanager:9093'
+
+# Archivos con reglas de alerta
+rule_files:
+  - '/etc/prometheus/alerts.yml'
+
+# Scrape targets
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'ecommerce-api'
+    static_configs:
+      - targets: ['ecommerce-api:3000']
+    metrics_path: '/metrics'
+
+  - job_name: 'cadvisor'
+    static_configs:
+      - targets: ['cadvisor:8080']

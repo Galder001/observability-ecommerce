@@ -1,0 +1,55 @@
+# Alertmanager — enrutamiento de alertas a Telegram
+# Documentación: https://prometheus.io/docs/alerting/latest/configuration/
+
+global:
+  resolve_timeout: 5m
+
+# Plantillas de los mensajes de Telegram
+templates:
+  - '/etc/alertmanager/templates/*.tmpl'
+
+route:
+  receiver: 'telegram-litahi'
+  group_by: ['alertname']
+  group_wait: 10s          # esperar 10s para agrupar alertas del mismo grupo
+  group_interval: 5m       # tiempo entre notificaciones del mismo grupo
+  repeat_interval: 1h      # repetir alerta no resuelta cada hora
+
+  # Rutas específicas por severidad
+  routes:
+    - matchers:
+        - severity = "critical"
+      receiver: 'telegram-litahi'
+      group_wait: 0s       # criticas: notificar inmediatamente
+      repeat_interval: 15m # y recordar más a menudo
+
+receivers:
+  - name: 'telegram-litahi'
+    telegram_configs:
+      - bot_token: '${TELEGRAM_BOT_TOKEN}'
+        chat_id: ${TELEGRAM_CHAT_ID}
+        parse_mode: 'HTML'
+        send_resolved: true
+        message: |
+          {{ if eq .Status "firing" }}🚨 <b>ALERTA DISPARADA</b>{{ else }}✅ <b>RESUELTA</b>{{ end }}
+
+          {{ range .Alerts }}
+          <b>{{ .Labels.alertname }}</b>
+          {{ if eq .Labels.severity "critical" }}🔴 Crítica{{ else if eq .Labels.severity "warning" }}🟡 Aviso{{ end }}
+
+          📝 {{ .Annotations.summary }}
+          📊 {{ .Annotations.description }}
+
+          🕐 {{ .StartsAt.Format "15:04:05" }}
+          {{ end }}
+
+          —
+          <i>Li Tahi+ Monitoring</i>
+
+inhibit_rules:
+  # Si hay una alerta crítica del mismo tipo, suprimir los warnings
+  - source_matchers:
+      - severity = "critical"
+    target_matchers:
+      - severity = "warning"
+    equal: ['alertname']

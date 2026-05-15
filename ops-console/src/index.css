@@ -1,0 +1,43 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    @apply bg-litahi-bg text-litahi-text;
+  }
+  body {
+    @apply font-sans antialiased;
+  }
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    @apply bg-litahi-bg;
+  }
+  ::-webkit-scrollbar-thumb {
+    @apply bg-litahi-border rounded;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
+  }
+}
+
+@layer components {
+  .card {
+    @apply bg-litahi-surface border border-litahi-border rounded-lg p-5;
+  }
+  .btn-primary {
+    @apply bg-litahi-accent hover:bg-litahi-accentDark text-white px-4 py-2 rounded-md font-medium transition-colors;
+  }
+  .btn-ghost {
+    @apply text-litahi-muted hover:text-litahi-text hover:bg-litahi-surface px-3 py-2 rounded-md transition-colors;
+  }
+  .input {
+    @apply bg-litahi-bg border border-litahi-border rounded-md px-3 py-2 text-litahi-text placeholder:text-litahi-muted focus:outline-none focus:border-litahi-accent;
+  }
+  .badge {
+    @apply px-2 py-0.5 rounded text-xs font-medium;
+  }
+}
